@@ -1,0 +1,440 @@
+[
+    {
+        "id": "flow_dynamic_polling",
+        "type": "tab",
+        "label": "PLC Dynamic Control"
+    },
+    {
+        "id": "inj_15s",
+        "type": "inject",
+        "z": "flow_dynamic_polling",
+        "name": "Διάβαζε (15s)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "15",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 100,
+        "y": 140,
+        "wires": [
+            [
+                "fn_read_cfg"
+            ]
+        ]
+    },
+    {
+        "id": "fn_read_cfg",
+        "type": "function",
+        "z": "flow_dynamic_polling",
+        "name": "Config: Read stoixeio",
+        "func": "msg.topic = \"ns=4;i=56\";\nmsg.datatype = \"Int16\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 140,
+        "wires": [
+            [
+                "client_1200_read"
+            ]
+        ]
+    },
+    {
+        "id": "client_1200_read",
+        "type": "OpcUa-Client",
+        "z": "flow_dynamic_polling",
+        "endpoint": "cb07a2c67dd236c2",
+        "action": "read",
+        "deadbandvalue": "",
+        "time": "",
+        "localfile": "",
+        "localkeyfile": "",
+        "useTransport": false,
+        "maxChunkCount": "",
+        "maxMessageSize": "",
+        "receiveBufferSize": "",
+        "sendBufferSize": "",
+        "setstatusandtime": false,
+        "keepsessionalive": false,
+        "name": "S7-1200 (READ)",
+        "applicationName": "",
+        "applicationUri": "",
+        "x": 690,
+        "y": 140,
+        "wires": [
+            [
+                "fn_logic",
+                "fn_to_gauge"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "fn_to_gauge",
+        "type": "function",
+        "z": "flow_dynamic_polling",
+        "name": "To Number",
+        "func": "if (msg.payload !== undefined) {\n    msg.payload = Number(msg.payload);\n    return msg;\n}\nreturn null;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 120,
+        "wires": [
+            [
+                "n_gauge"
+            ]
+        ]
+    },
+    {
+        "id": "fn_logic",
+        "type": "function",
+        "z": "flow_dynamic_polling",
+        "name": "Logic (>5)",
+        "func": "var alarm = (msg.payload >= 5);\nmsg.payload = alarm;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 60,
+        "wires": [
+            [
+                "sw_alarm"
+            ]
+        ]
+    },
+    {
+        "id": "sw_alarm",
+        "type": "switch",
+        "z": "flow_dynamic_polling",
+        "name": "Check Alert",
+        "property": "payload",
+        "rules": [
+            {
+                "t": "true"
+            },
+            {
+                "t": "false"
+            }
+        ],
+        "outputs": 2,
+        "x": 1210,
+        "y": 60,
+        "wires": [
+            [
+                "delay_1s",
+                "fn_write_1500_alert"
+            ],
+            [
+                "reset_loop"
+            ]
+        ]
+    },
+    {
+        "id": "delay_1s",
+        "type": "delay",
+        "z": "flow_dynamic_polling",
+        "name": "1s Delay",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "",
+        "nbRateUnits": "",
+        "randomFirst": "",
+        "randomLast": "",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 460,
+        "y": 360,
+        "wires": [
+            [
+                "fn_read_cfg"
+            ]
+        ]
+    },
+    {
+        "id": "reset_loop",
+        "type": "change",
+        "z": "flow_dynamic_polling",
+        "name": "Stop 1s",
+        "rules": [
+            {
+                "t": "set",
+                "p": "reset",
+                "pt": "msg",
+                "to": "true",
+                "tot": "bool"
+            }
+        ],
+        "x": 1060,
+        "y": 340,
+        "wires": [
+            [
+                "delay_1s"
+            ]
+        ]
+    },
+    {
+        "id": "fn_write_1500_alert",
+        "type": "function",
+        "z": "flow_dynamic_polling",
+        "name": "Config: Alert 1500",
+        "func": "msg.topic = \"ns=4;i=23\";\nmsg.datatype = \"Boolean\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1570,
+        "y": 60,
+        "wires": [
+            [
+                "client_1500_write"
+            ]
+        ]
+    },
+    {
+        "id": "client_1500_write",
+        "type": "OpcUa-Client",
+        "z": "flow_dynamic_polling",
+        "endpoint": "1b84f8ef1f9025e2",
+        "action": "write",
+        "name": "S7-1500 (WRITE)",
+        "x": 1950,
+        "y": 580,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "pulse_true",
+        "type": "function",
+        "z": "flow_dynamic_polling",
+        "name": "Set True",
+        "func": "msg.payload = true;\nmsg.topic = \"ns=4;i=45\";\nmsg.datatype = \"Boolean\";\nreturn msg;",
+        "outputs": 1,
+        "x": 820,
+        "y": 820,
+        "wires": [
+            [
+                "client_1200_btn"
+            ]
+        ]
+    },
+    {
+        "id": "set_false",
+        "type": "function",
+        "z": "flow_dynamic_polling",
+        "name": "Set False",
+        "func": "msg.payload = false;\nmsg.topic = \"ns=4;i=45\";\nmsg.datatype = \"Boolean\";\nreturn msg;",
+        "outputs": 1,
+        "x": 900,
+        "y": 900,
+        "wires": [
+            [
+                "client_1200_btn"
+            ]
+        ]
+    },
+    {
+        "id": "client_1200_btn",
+        "type": "OpcUa-Client",
+        "z": "flow_dynamic_polling",
+        "endpoint": "cb07a2c67dd236c2",
+        "action": "write",
+        "name": "S7-1200 (WRITE BUTTON)",
+        "x": 1200,
+        "y": 780,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "n_gauge",
+        "type": "ui_gauge",
+        "z": "flow_dynamic_polling",
+        "name": "",
+        "group": "main_group",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "ANALOG 1200",
+        "label": "Units",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "10",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 1380,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "n_btn",
+        "type": "ui_button",
+        "z": "flow_dynamic_polling",
+        "name": "",
+        "group": "main_group",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "TRIGGER (bool_2)",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "true",
+        "payloadType": "bool",
+        "topic": "topic",
+        "topicType": "str",
+        "x": 550,
+        "y": 820,
+        "wires": [
+            [
+                "pulse_true",
+                "pulse_false"
+            ]
+        ]
+    },
+    {
+        "id": "pulse_false",
+        "type": "delay",
+        "z": "flow_dynamic_polling",
+        "name": "500ms",
+        "pauseType": "delay",
+        "timeout": "500",
+        "timeoutUnits": "milliseconds",
+        "rate": "",
+        "nbRateUnits": "",
+        "randomFirst": "",
+        "randomLast": "",
+        "randomUnits": "seconds",
+        "allowrate": false,
+        "outputs": 1,
+        "x": 770,
+        "y": 900,
+        "wires": [
+            [
+                "set_false"
+            ]
+        ]
+    },
+    {
+        "id": "btn_reset_val",
+        "type": "ui_button",
+        "z": "flow_dynamic_polling",
+        "name": "",
+        "group": "main_group",
+        "width": "",
+        "height": "",
+        "passthru": false,
+        "label": "ΜΗΔΕΝΙΣΜΟΣ και των δυο",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "#ff4d4d",
+        "className": "",
+        "icon": "",
+        "payload": "0",
+        "payloadType": "num",
+        "topic": "topic",
+        "topicType": "str",
+        "x": 580,
+        "y": 1020,
+        "wires": [
+            [
+                "fn_logic_reset"
+            ]
+        ]
+    },
+    {
+        "id": "fn_logic_reset",
+        "type": "function",
+        "z": "flow_dynamic_polling",
+        "name": "Set to 0",
+        "func": "var msg1 = {\n    payload: 0,\n    topic: \"ns=4;i=56\",\n    datatype: \"Int16\"\n};\nvar msg2 = {\n    payload: false,\n    topic: \"ns=4;i=23\",\n    datatype: \"Boolean\"\n};\nreturn [[msg1, msg2]];",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 1020,
+        "wires": [
+            [
+                "client_1200_btn",
+                "client_1500_write"
+            ]
+        ]
+    },
+    {
+        "id": "cb07a2c67dd236c2",
+        "type": "OpcUa-Endpoint",
+        "endpoint": "opc.tcp://10.253.0.40:4840",
+        "none": true
+    },
+    {
+        "id": "1b84f8ef1f9025e2",
+        "type": "OpcUa-Endpoint",
+        "endpoint": "opc.tcp://10.253.0.30:4810",
+        "none": true
+    },
+    {
+        "id": "main_group",
+        "type": "ui_group",
+        "name": "PLC Control",
+        "tab": "main_tab",
+        "order": 1,
+        "disp": true,
+        "width": "6"
+    },
+    {
+        "id": "main_tab",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard"
+    },
+    {
+        "id": "9be5a38077c785b1",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-opcua": "0.2.345",
+            "node-red-dashboard": "3.6.6"
+        }
+    }
+]
