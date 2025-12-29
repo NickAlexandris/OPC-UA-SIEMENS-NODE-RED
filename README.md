@@ -11,10 +11,9 @@ Both the S7-1214C and S7-1511-1 PN operate as OPC UA servers.
 # Mesurments 
 Network traffic measurements were collected using Wireshark, in both online and offline operating modes, over a duration of 1 minute.
 
-Online mode:                       Offline mode:
-Average bytes/s 3685               Average bytes/s 1080
-Average bits/s  29k                Average bits/s  8647      
-
+Mode	     Average Bytes/s	Average Bits/s
+Online mode	    3,685	           29 kbps
+Offline mode  	1,080	           8,647 bps
 
 
 
